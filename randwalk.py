@@ -126,6 +126,8 @@ ax.set_xlim(-200, 200)
 ax.set_ylim(-200, 200)
 ax.set_zlim(-200, 200)
 
+plt.show()
+
 # Create a histogram with 1000 bins
 histogram = input("Histogram plot? (y or any other key for no): ")
 if histogram == 'y':
