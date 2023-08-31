@@ -57,6 +57,7 @@ num_iterations = int(1e6)
 # Lists to store escape times for each iteration
 escape_times = []
 iteration_numbers = []
+num_escapes = 0
 
 # Define the sun_radius
 sun_radius = int(1e2)
@@ -73,7 +74,11 @@ def init():
     for line in all_lines:
         line.set_data([], [])
         line.set_3d_properties([])
-    return all_lines
+
+    average_escape_text.set_text('')
+    escape_count_text.set_text('')
+
+    return all_lines + [average_escape_text, escape_count_text]
 
 # Function to calculate and update the average escape time
 def update_average_escape(iteration):
@@ -86,6 +91,7 @@ def update_average_escape(iteration):
 
 # Function to animate frames and define escape parameters
 def animate(iteration):
+    global num_escapes  # Add this line to indicate num_escapes is a global variable
     n_steps = int(1e3)
     reflection_angle_degrees = random.uniform(0, 180)
     x_data, y_data, z_data = randomwalk3D(n_steps, reflection_angle_degrees)
@@ -93,6 +99,9 @@ def animate(iteration):
     distances = np.sqrt(x_data**2 + y_data**2 + z_data**2)
     escape_radius = int(1e2)
     escape_time = np.argmax(distances > escape_radius)
+
+    if escape_time < n_steps:
+        num_escapes += 1
 
     escape_times.append(escape_time)
     iteration_numbers.append(iteration + 1)
@@ -103,10 +112,14 @@ def animate(iteration):
     # Update the average escape text
     average_escape_text.set_text(f'Mean escape counts: {np.mean(escape_times):.2f}')
 
-    return all_lines + [average_escape_text]
+    # Update the escape count text
+    escape_count_text.set_text(f'Escapes: {num_escapes} / {n_steps}')
 
-# Create a text annotation for displaying average escape time
+    return all_lines + [average_escape_text, escape_count_text]
+
+# Create a text annotation for displaying average escape time and counts
 average_escape_text = ax.text2D(0.005, 0.005, '', transform=ax.transAxes, fontsize=10, color='black')
+escape_count_text = ax.text2D(0.005, 0.035, '', transform=ax.transAxes, fontsize=10, color='black')
 
 # Create the animation
 ani = FuncAnimation(fig, animate, frames=num_iterations, init_func=init, interval = 0.1, blit=True, repeat=False)
