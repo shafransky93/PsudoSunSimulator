@@ -10,6 +10,11 @@ def randomwalk3D(n, angle_degrees, escape_radius=100):
     angle_rad = np.radians(angle_degrees)
     current_direction = np.array([1, 0, 0])  # Initial direction (e.g., to the right)
 
+    def density(x, y, z):
+        # Define a density function that varies with position
+        # You can modify this function to create your desired gradient
+        return 1.0 / (1.0 + np.sqrt(x**2 + y**2 + z**2))
+
     for i in range(1, n):
         # Calculate the distance from the origin (sun)
         distance = np.sqrt(x[i - 1]**2 + y[i - 1]**2 + z[i - 1]**2)
@@ -44,6 +49,11 @@ def randomwalk3D(n, angle_degrees, escape_radius=100):
             # Apply the rotation to the current direction
             current_direction = np.dot(rotation_matrix, current_direction)
 
+            # Adjust the probability of reflection based on density
+            reflection_prob = density(x[i - 1], y[i - 1], z[i - 1])
+            if np.random.rand() > reflection_prob:
+                current_direction = -current_direction  # Reflect back
+
             # Update the position
             x[i] = x[i - 1] + current_direction[0]
             y[i] = y[i - 1] + current_direction[1]
@@ -52,7 +62,7 @@ def randomwalk3D(n, angle_degrees, escape_radius=100):
     return x, y, z
 
 # Number of iterations
-num_iterations = int(1e6)
+num_iterations = int(1e3)
 
 # Lists to store escape times for each iteration
 escape_times = []
@@ -92,7 +102,7 @@ def update_average_escape(iteration):
 # Function to animate frames and define escape parameters
 def animate(iteration):
     global num_escapes  # Add this line to indicate num_escapes is a global variable
-    n_steps = int(1e3)
+    n_steps = int(5e4)
     reflection_angle_degrees = random.uniform(0, 180)
     x_data, y_data, z_data = randomwalk3D(n_steps, reflection_angle_degrees)
 
@@ -100,11 +110,11 @@ def animate(iteration):
     escape_radius = int(1e2)
     escape_time = np.argmax(distances > escape_radius)
 
-    if escape_time < n_steps:
+    if escape_radius < escape_time:
         num_escapes += 1
 
     escape_times.append(escape_time)
-    iteration_numbers.append(iteration + 1)
+    iteration_numbers.append(iteration + 2)
 
     line, = ax.plot(x_data, y_data, z_data, '-', linewidth=0.5, alpha=0.5, color=np.random.rand(3,))
     all_lines.append(line)
@@ -115,11 +125,15 @@ def animate(iteration):
     # Update the escape count text
     escape_count_text.set_text(f'Escapes: {num_escapes} / {n_steps}')
 
-    return all_lines + [average_escape_text, escape_count_text]
+    iteration_count_text.set_text(f'Iteration: {iteration}')
+
+    return all_lines + [average_escape_text, escape_count_text, iteration_count_text]
 
 # Create a text annotation for displaying average escape time and counts
 average_escape_text = ax.text2D(0.005, 0.005, '', transform=ax.transAxes, fontsize=10, color='black')
 escape_count_text = ax.text2D(0.005, 0.035, '', transform=ax.transAxes, fontsize=10, color='black')
+iteration_count_text = ax.text2D(0.005, 0.07, '', transform=ax.transAxes, fontsize=10, color='black')
+
 
 # Create the animation
 ani = FuncAnimation(fig, animate, frames=num_iterations, init_func=init, interval = 0.1, blit=True, repeat=False)
@@ -135,9 +149,9 @@ ax.plot_surface(x_sun, y_sun, z_sun, color='yellow', alpha=0.3)
 # Define Plot
 ax.set_title('Psudo Sun Simulator')
 
-ax.set_xlim(-200, 200)
-ax.set_ylim(-200, 200)
-ax.set_zlim(-200, 200)
+ax.set_xlim(-150, 150)
+ax.set_ylim(-150, 150)
+ax.set_zlim(-150, 150)
 
 plt.show()
 
